@@ -1,0 +1,18 @@
+{
+  "extends": "airbnb",
+  "rules": {
+    "import/no-extraneous-dependencies": [
+      2,
+      {
+        "devDependencies": true,
+        "optionalDependencies": false,
+        "peerDependencies": false
+      }
+    ],
+    "no-underscore-dangle": 0,
+    "arrow-body-style": [ "error", "always"],
+    "max-len": 0,
+    "no-param-reassign": 0,
+    "no-use-before-define": 0
+  }
+}     
