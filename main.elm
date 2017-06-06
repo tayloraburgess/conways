@@ -1,8 +1,9 @@
 import Html exposing (Html, beginnerProgram, div, button, text)
 import Html.Attributes exposing (style)
 import Html.Events exposing (onClick)
-import List exposing (map, range)
+import List exposing (map, range, foldr)
 import Tuple exposing (first)
+import Debug exposing (log)
 import Time exposing (now, inSeconds)
 import Css exposing (asPairs, display, height, width, backgroundColor, rgb, px, inlineBlock)
 
@@ -28,7 +29,7 @@ type alias Board =
 
 notRandomState : Int -> CellStatus
 notRandomState seed =
-  if seed % 4 == 0 then
+  if seed % 3 == 0 then
     Alive
   else
     Dead
@@ -48,12 +49,49 @@ buildBoard size =
 model =
   (buildBoard 25)
 
+checkCell : Cell -> Cell -> Int
+checkCell cell currentCell =
+  if currentCell.x == cell.x && currentCell.y == cell.y then
+    0
+  else if currentCell.x == cell.x - 1 && currentCell.y == cell.y - 1 && currentCell.status == Alive  then
+    1
+  else if currentCell.x == cell.x - 1 && currentCell.y == cell.y && currentCell.status == Alive then
+    1
+  else if currentCell.x == cell.x - 1 && currentCell.y == cell.y + 1 && currentCell.status == Alive then
+    1
+  else if currentCell.x == cell.x && currentCell.y == cell.y - 1 && currentCell.status == Alive then
+    1
+  else if currentCell.x == cell.x && currentCell.y == cell.y + 1 && currentCell.status == Alive then
+    1
+  else if currentCell.x == cell.x + 1 && currentCell.y == cell.y - 1 && currentCell.status == Alive then
+    1
+  else if currentCell.x == cell.x + 1 && currentCell.y == cell.y && currentCell.status == Alive then
+    1
+  else if currentCell.x == cell.x + 1 && currentCell.y == cell.y + 1 && currentCell.status == Alive then
+    1
+  else
+    0
+
+  
+checkRow : Cell -> Row -> Int -> Int 
+checkRow cell row fold =
+  foldr (\a -> \b -> (checkCell cell a) + b) fold row 
+
 checkNeighbors : Board -> Cell -> CellStatus
 checkNeighbors board cell =
-  if cell.status == Alive then
-    Dead
-  else
-    Alive
+  let
+    neighbors = foldr (checkRow cell) 0 board
+  in
+    if cell.status == Alive && neighbors < 2 then
+      Dead
+    else if cell.status == Alive && neighbors == 2 || neighbors == 3 then
+      Alive
+    else if cell.status == Alive && neighbors > 3 then
+      Dead
+    else if cell.status == Dead && neighbors == 3 then
+      Alive
+    else
+      Dead
 
 update msg model =
   case msg of
