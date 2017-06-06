@@ -1,7 +1,7 @@
 import Html exposing (Html, beginnerProgram, div, button, text)
 import Html.Attributes exposing (style)
 import Html.Events exposing (onClick)
-import List exposing (map, repeat)
+import List exposing (map, repeat, range)
 import Css exposing (asPairs, display, height, width, backgroundColor, rgb, px, inlineBlock)
 
 
@@ -24,17 +24,17 @@ type alias Row =
 type alias Board =
   List Row
 
-buildCell : Cell
-buildCell =
-    { x = 0, y = 0, status = Alive }
+buildCell : Int -> Int -> Cell
+buildCell y x =
+  { x = x, y = y, status = Alive }
 
-buildRow : Int -> Row
-buildRow size =
-  repeat size (buildCell)
+buildRow : Int -> Int -> Row
+buildRow size y =
+  map (buildCell y) (range 0 size)
 
 buildBoard : Int -> Board
 buildBoard size =
-  repeat size (buildRow size)
+  map (buildRow size) (range 0 size) 
 
 model =
   (buildBoard 25)
