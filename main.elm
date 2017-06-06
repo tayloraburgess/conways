@@ -1,7 +1,9 @@
 import Html exposing (Html, beginnerProgram, div, button, text)
 import Html.Attributes exposing (style)
 import Html.Events exposing (onClick)
-import List exposing (map, repeat, range)
+import List exposing (map, range)
+import Tuple exposing (first)
+import Time exposing (now, inSeconds)
 import Css exposing (asPairs, display, height, width, backgroundColor, rgb, px, inlineBlock)
 
 
@@ -24,9 +26,16 @@ type alias Row =
 type alias Board =
   List Row
 
+notRandomState : Int -> CellStatus
+notRandomState seed =
+  if seed % 4 == 0 then
+    Alive
+  else
+    Dead
+
 buildCell : Int -> Int -> Cell
 buildCell y x =
-  { x = x, y = y, status = Alive }
+  { x = x, y = y, status = (notRandomState (x + y)) }
 
 buildRow : Int -> Int -> Row
 buildRow size y =
