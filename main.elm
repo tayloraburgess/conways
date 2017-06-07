@@ -1,9 +1,10 @@
 import Html exposing (Html, beginnerProgram, div, button, text)
 import Html.Attributes exposing (style)
 import Html.Events exposing (onClick)
-import List exposing (map, range, foldr)
-import Tuple exposing (first)
+import List exposing (map, indexedMap, range, foldr, append)
+import Tuple exposing (first, second)
 import Debug exposing (log)
+import Random exposing (Seed, bool, initialSeed, step)
 import Time exposing (now, inSeconds)
 import Css exposing (asPairs, display, height, width, backgroundColor, rgb, px, inlineBlock)
 
@@ -27,27 +28,46 @@ type alias Row =
 type alias Board =
   List Row
 
-notRandomState : Int -> CellStatus
-notRandomState seed =
-  if seed % 3 == 0 then
-    Alive
+checkBool : Int -> (Int, Bool) -> CellStatus -> CellStatus
+checkBool coord bool status =
+  if (first bool) == coord then
+    if (second bool) == True then
+      Alive
+    else
+      Dead
   else
-    Dead
+    status
 
-buildCell : Int -> Int -> Cell
-buildCell y x =
-  { x = x, y = y, status = (notRandomState (x + y)) }
+getBool : List (Int, Bool) -> Int -> CellStatus
+getBool bools coord =
+  foldr (\a -> \b -> (checkBool coord a b)) Dead bools
 
-buildRow : Int -> Int -> Row
-buildRow size y =
-  map (buildCell y) (range 0 size)
+  
+buildCell : List (Int, Bool) -> Int -> Int -> Cell
+buildCell bools y x =
+  { x = x, y = y, status = (getBool bools (x + y)) }
 
-buildBoard : Int -> Board
-buildBoard size =
-  map (buildRow size) (range 0 size) 
+buildRow : List (Int, Bool) -> Int -> Int -> Row
+buildRow bools size y =
+  map (buildCell bools y) (range 0 size)
+
+generateBool : Int -> (List Bool, Seed) -> (List Bool, Seed)
+generateBool num tuple =
+  let
+    newSeed = step bool (second tuple)
+  in
+    (append (first tuple) [(first newSeed)], (second newSeed))
+
+
+buildBoard : Int -> Int -> Board
+buildBoard size seed =
+  let
+    bools = indexedMap (\a -> \b -> (a, b)) (first(foldr generateBool ([], (initialSeed seed)) (range 0 (size * size))))
+  in
+    map (buildRow bools size) (range 0 size) 
 
 model =
-  (buildBoard 25)
+  (buildBoard 30 89)
 
 checkCell : Cell -> Cell -> Int
 checkCell cell currentCell =
