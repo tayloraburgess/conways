@@ -1,23 +1,23 @@
-import Html exposing (Html, beginnerProgram, div, button, text)
+import Html exposing (Html, program, div, button, text)
 import Html.Attributes exposing (style)
 import Html.Events exposing (onClick)
-import List exposing (map, indexedMap, range, foldr, append)
+import List exposing (map, indexedMap, range, foldr, foldl, append)
 import Tuple exposing (first, second)
 import Debug exposing (log)
 import Random exposing (Seed, bool, initialSeed, step)
-import Time exposing (now, inSeconds)
+import Time exposing (Time, millisecond, now, inSeconds, every)
 import Css exposing (asPairs, display, height, width, backgroundColor, rgb, px, inlineBlock)
 
 
 main =
-  beginnerProgram { model = model, view = view, update = update }
+  program { init = (model, Cmd.none), view = view, update = update, subscriptions = subscriptions }
 
 
 type CellStatus =
   Alive | Dead
 
 type Msg =
-  Generate 
+  Init | Generate Time
 
 type alias Cell =
   { x : Int, y : Int, status : CellStatus }
@@ -62,7 +62,7 @@ generateBool num tuple =
 buildBoard : Int -> Int -> Board
 buildBoard size seed =
   let
-    bools = indexedMap (\a -> \b -> (a, b)) (first(foldr generateBool ([], (initialSeed seed)) (range 0 (size * size))))
+    bools = indexedMap (\a -> \b -> (a, b)) (first(foldl generateBool ([], (initialSeed seed)) (range 0 (size * size))))
   in
     map (buildRow bools size) (range 0 size) 
 
@@ -100,7 +100,7 @@ checkRow cell row fold =
 checkNeighbors : Board -> Cell -> CellStatus
 checkNeighbors board cell =
   let
-    neighbors = foldr (checkRow cell) 0 board
+    neighbors = foldl (checkRow cell) 0 board
   in
     if cell.status == Alive && neighbors < 2 then
       Dead
@@ -115,7 +115,9 @@ checkNeighbors board cell =
 
 update msg model =
   case msg of
-    Generate ->
+    Init -> 
+      (model, Cmd.none)
+    Generate time ->
       let
         updateCell : Cell -> Cell
         updateCell cell =
@@ -125,7 +127,12 @@ update msg model =
         updateRow row =
           (map updateCell row)
       in
-        (map updateRow model) 
+        ((map updateRow model), Cmd.none)
+
+
+subscriptions : Board -> Sub Msg
+subscriptions model =
+  every (100 * millisecond) Generate
 
 
 styles =
@@ -143,7 +150,4 @@ renderRow row =
   div [ styles [ height (px 20) ] ] (map renderCell row)
 
 view model =
-  div []
-  [ button [ onClick Generate ] [ text "Generate" ]
-  , div [] (map renderRow model)
-  ]
+  div [] (map renderRow model)
