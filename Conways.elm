@@ -1,7 +1,6 @@
 port module Conways exposing (..)
 
 import Html exposing (Html, program, div, button, text)
-import Html.Attributes exposing (style)
 import Html.Events exposing (onClick)
 import List exposing (map, indexedMap, range, foldr, foldl, append)
 import Tuple exposing (first, second)
@@ -74,7 +73,7 @@ buildBoard size seed =
     map (buildRow bools size) (range 0 size) 
 
 model =
-  (buildBoard 30 89)
+  (buildBoard 20 30)
 
 checkCell : Cell -> Cell -> Int
 checkCell cell currentCell =
@@ -157,23 +156,9 @@ update msg model =
 subscriptions : Board -> Sub Msg
 subscriptions model =
   Sub.batch
-  [ every (200 * millisecond) Generate
+  [ every (100 * millisecond) Generate
   , every (100 * millisecond) Render 
   ]
 
-styles =
-  asPairs >> style
-
-renderCell : Cell -> Html msg 
-renderCell cell =
-  if cell.status == Alive then
-    div [ styles [ display inlineBlock, width (px 20), height (px 20), backgroundColor (rgb 255 0 0) ] ]  []
-  else
-    div [ styles [ display inlineBlock, width (px 20), height (px 20), backgroundColor (rgb 255 255 255) ] ]  []
-
-renderRow : Row -> Html msg
-renderRow row =
-  div [ styles [ height (px 20) ] ] (map renderCell row)
-
 view model =
-  div [] (map renderRow model)
+  div [] [ text "placeholder" ] 
