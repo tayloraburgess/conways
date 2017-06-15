@@ -1,3 +1,5 @@
+port module Conways exposing (..)
+
 import Html exposing (Html, program, div, button, text)
 import Html.Attributes exposing (style)
 import Html.Events exposing (onClick)
@@ -17,7 +19,7 @@ type CellStatus =
   Alive | Dead
 
 type Msg =
-  Init | Generate Time
+  Init | Generate Time | Render Time
 
 type alias Cell =
   { x : Int, y : Int, status : CellStatus }
@@ -27,6 +29,11 @@ type alias Row =
 
 type alias Board =
   List Row
+
+type alias JSCell =
+  { x: Int, y : Int, status : Bool }
+
+port render : List JSCell -> Cmd msg
 
 checkBool : Int -> (Int, Bool) -> CellStatus -> CellStatus
 checkBool coord bool status =
@@ -92,6 +99,21 @@ checkCell cell currentCell =
   else
     0
 
+statusToBool : CellStatus -> Bool
+statusToBool status =
+  if status == Alive then
+    True
+  else
+    False
+
+cellToJS : Cell -> JSCell
+cellToJS cell =
+  {x = cell.x, y = cell.y, status = (statusToBool cell.status)}
+
+boardToJS : Board -> List JSCell
+boardToJS board =
+  foldl (\a -> \b -> (append (map cellToJS a) b)) [] board 
+
   
 checkRow : Cell -> Row -> Int -> Int 
 checkRow cell row fold =
@@ -128,12 +150,16 @@ update msg model =
           (map updateCell row)
       in
         ((map updateRow model), Cmd.none)
+    Render time ->
+      (model, render (boardToJS model))
 
 
 subscriptions : Board -> Sub Msg
 subscriptions model =
-  every (100 * millisecond) Generate
-
+  Sub.batch
+  [ every (200 * millisecond) Generate
+  , every (100 * millisecond) Render 
+  ]
 
 styles =
   asPairs >> style

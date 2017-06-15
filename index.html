@@ -1,0 +1,10 @@
+<div id="conways"></div>
+<script src="conways.js"></script>
+<script>
+  var node = document.getElementById('conways');
+  var app = Elm.Conways.embed(node);
+
+  app.ports.render.subscribe(function(list) {
+    console.log(list);
+  });
+</script>
