@@ -15,14 +15,11 @@ main =
   program { init = (model, Cmd.none), view = view, update = update, subscriptions = subscriptions }
 
 
-type CellStatus =
-  Alive | Dead
-
 type Msg =
   Init | Redraw | ChangeSeed String | ChangeSize String | Generate Time | Render Time
 
 type alias Cell =
-  { x : Int, y : Int, status : CellStatus }
+  { x : Int, y : Int, status : Bool }
 
 type alias Row =
   List Cell
@@ -30,29 +27,26 @@ type alias Row =
 type alias Board =
   List Row
 
-type alias JSCell =
-  { x : Int, y : Int, status : Bool }
-
 type alias Model =
   { board : Board, seed: Int, size: Int }
 
-port render : List JSCell -> Cmd msg
+port render : List Cell -> Cmd msg
 
 port reDraw : Int -> Cmd msg
 
-checkBool : Int -> (Int, Bool) -> CellStatus -> CellStatus
+checkBool : Int -> (Int, Bool) -> Bool -> Bool 
 checkBool coord bool status =
   if (first bool) == coord then
     if (second bool) == True then
-      Alive
+      True
     else
-      Dead
+      False
   else
     status
 
-getBool : List (Int, Bool) -> Int -> CellStatus
+getBool : List (Int, Bool) -> Int -> Bool
 getBool bools coord =
-  foldr (\a -> \b -> (checkBool coord a b)) Dead bools
+  foldr (\a -> \b -> (checkBool coord a b)) False bools
 
   
 buildCell : List (Int, Bool) -> Int -> Int -> Cell
@@ -85,60 +79,50 @@ checkCell : Cell -> Cell -> Int
 checkCell cell currentCell =
   if currentCell.x == cell.x && currentCell.y == cell.y then
     0
-  else if currentCell.x == cell.x - 1 && currentCell.y == cell.y - 1 && currentCell.status == Alive  then
+  else if currentCell.x == cell.x - 1 && currentCell.y == cell.y - 1 && currentCell.status == True  then
     1
-  else if currentCell.x == cell.x - 1 && currentCell.y == cell.y && currentCell.status == Alive then
+  else if currentCell.x == cell.x - 1 && currentCell.y == cell.y && currentCell.status == True  then
     1
-  else if currentCell.x == cell.x - 1 && currentCell.y == cell.y + 1 && currentCell.status == Alive then
+  else if currentCell.x == cell.x - 1 && currentCell.y == cell.y + 1 && currentCell.status == True then
     1
-  else if currentCell.x == cell.x && currentCell.y == cell.y - 1 && currentCell.status == Alive then
+  else if currentCell.x == cell.x && currentCell.y == cell.y - 1 && currentCell.status == True then
     1
-  else if currentCell.x == cell.x && currentCell.y == cell.y + 1 && currentCell.status == Alive then
+  else if currentCell.x == cell.x && currentCell.y == cell.y + 1 && currentCell.status == True then
     1
-  else if currentCell.x == cell.x + 1 && currentCell.y == cell.y - 1 && currentCell.status == Alive then
+  else if currentCell.x == cell.x + 1 && currentCell.y == cell.y - 1 && currentCell.status == True then
     1
-  else if currentCell.x == cell.x + 1 && currentCell.y == cell.y && currentCell.status == Alive then
+  else if currentCell.x == cell.x + 1 && currentCell.y == cell.y && currentCell.status == True then
     1
-  else if currentCell.x == cell.x + 1 && currentCell.y == cell.y + 1 && currentCell.status == Alive then
+  else if currentCell.x == cell.x + 1 && currentCell.y == cell.y + 1 && currentCell.status == True then
     1
   else
     0
 
-statusToBool : CellStatus -> Bool
-statusToBool status =
-  if status == Alive then
-    True
-  else
-    False
 
-cellToJS : Cell -> JSCell
-cellToJS cell =
-  {x = cell.x, y = cell.y, status = (statusToBool cell.status)}
-
-boardToJS : Board -> List JSCell
+boardToJS : Board -> List Cell
 boardToJS board =
-  foldl (\a -> \b -> (append (map cellToJS a) b)) [] board 
+  foldl (\a -> \b -> (append a b)) [] board 
 
   
 checkRow : Cell -> Row -> Int -> Int 
 checkRow cell row fold =
   foldr (\a -> \b -> (checkCell cell a) + b) fold row 
 
-checkNeighbors : Board -> Cell -> CellStatus
+checkNeighbors : Board -> Cell -> Bool
 checkNeighbors board cell =
   let
     neighbors = foldl (checkRow cell) 0 board
   in
-    if cell.status == Alive && neighbors < 2 then
-      Dead
-    else if cell.status == Alive && neighbors == 2 || neighbors == 3 then
-      Alive
-    else if cell.status == Alive && neighbors > 3 then
-      Dead
-    else if cell.status == Dead && neighbors == 3 then
-      Alive
+    if cell.status == True && neighbors < 2 then
+      False 
+    else if cell.status == True && neighbors == 2 || neighbors == 3 then
+      True
+    else if cell.status == True && neighbors > 3 then
+      False
+    else if cell.status == False && neighbors == 3 then
+      True
     else
-      Dead
+      False
 
 update msg model =
   case msg of
