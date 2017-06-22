@@ -3,7 +3,7 @@ port module Conways exposing (..)
 import Html exposing (Html, program, div, button, text, input)
 import Html.Attributes exposing (type_, defaultValue)
 import Html.Events exposing (onClick, onInput)
-import List exposing (map, indexedMap, range, foldr, foldl, append, member)
+import List exposing (map, indexedMap, range, foldr, foldl, append, member, filter)
 import Tuple exposing (first, second)
 import String exposing (toInt)
 import Random exposing (Seed, bool, initialSeed, step)
@@ -67,8 +67,8 @@ buildBoard size seed =
 model =
   { board = (buildBoard 5 30), size = 5, seed = 30 }
 
-countNeighbors : Cell -> Board -> Int
-countNeighbors cell board =
+countNeighbors : Cell -> Board -> Board -> Int
+countNeighbors cell liveCells board =
   let
       checkList = [
         { x = cell.x - 1, y = cell.y - 1, status = True }
@@ -81,7 +81,7 @@ countNeighbors cell board =
         , { x = cell.x + 1, y = cell.y + 1, status = True }
         ]
   in
-      foldl (\a -> \b -> b + (neighborIncrement (member a board))) 0 checkList 
+      foldl (\a -> \b -> b + (neighborIncrement (member a liveCells))) 0 checkList 
 
 neighborIncrement : Bool -> Int 
 neighborIncrement bool =
@@ -90,10 +90,10 @@ neighborIncrement bool =
   else
     0
 
-checkNeighbors : Board -> Cell -> Bool
-checkNeighbors board cell =
+checkNeighbors : Board -> Board -> Cell -> Bool
+checkNeighbors board liveCells cell =
   let
-      neighbors = (countNeighbors cell board) 
+      neighbors = (countNeighbors cell liveCells board) 
   in
       if cell.status == True && neighbors < 2 then
         False 
@@ -112,9 +112,11 @@ update msg model =
       (model, Cmd.none)
     Generate time ->
       let
+          liveCells = filter (\a -> a.status == True) model.board
+
           updateCell : Cell -> Cell
           updateCell cell =
-            { x = cell.x, y = cell.y, status = (checkNeighbors model.board cell) }
+            { x = cell.x, y = cell.y, status = (checkNeighbors model.board liveCells cell) }
       in
           ({ board = (map updateCell model.board), size = model.size, seed = model.seed }, Cmd.none)
     Render time ->
